@@ -3,12 +3,14 @@ package hello.springmvc.basic.request;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.springmvc.basic.HelloData;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.codec.binary.StringUtils;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,31 +23,49 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Controller
 public class RequestBodyJsonController {
-    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private ObjectMapper objectMapper = new ObjectMapper(); //String to Object
 
     @PostMapping("/request-body-json-v1") //text로도 가능
     public void requestBodyJsonV1(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
         ServletInputStream inputStream = request.getInputStream();
-
         String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-        log.info("messageBody={}", messageBody);
-
-        //String -> Object
-        //ObjectMapper.readValue();
-        HelloData data = objectMapper.readValue(messageBody, HelloData.class);
-
-        log.info("username={}, age={}", data.getUsername(), data.getAge());
+        log.info("messageBody={}",messageBody);
+        HelloData helloData = objectMapper.readValue(messageBody, HelloData.class);
+        log.info("username={},   age={}",helloData.getUsername(),helloData.getAge());
         response.getWriter().write("ok");
     }
 
+
+    /**
+     * @RequestBody
+     * HttpMessageConverter 사용 -> StringHttpMessageConverter 적용
+     *
+     * @ResponseBody--> 진짜 그냥 바디 자체를 가져옴
+     * - 모든 메서드에 @ResponseBody 적용
+     * - 메시지 바디 정보 직접 반환(view 조회X)
+     * - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용
+     */
     @ResponseBody
     @PostMapping("/request-body-json-v2")//text로도 가능
-    public String requestBodyJsonV2(@RequestBody String messageBody) throws IOException {
-        HelloData data = objectMapper.readValue(messageBody, HelloData.class);
+    public String requestBodyJsonV2(@RequestBody String message2) throws IOException {
+        HelloData data = objectMapper.readValue(message2, HelloData.class);
+        System.out.println("----------------");
+        System.out.println(message2);
         log.info("username={}, age={}", data.getUsername(), data.getAge());
         return "ok";
     }
+
+    /**
+     * @RequestBody 객체 파라미터 CASE
+     * @RequestBody HelloData data
+     * @RequestBody 에 직접 만든 객체를 지정할 수 있다.
+     * @RequestBody는 생략 불가능
+     *
+     * 반복, @RequestBody 는 Body를 String으로 가져오지만, 객체로도 받을수있음 ex) HelloData
+     *
+     * 생략하면  @ModelAttribute가 적용 됨 --> param !=JSON
+     */
 
     @ResponseBody
     @PostMapping("/request-body-json-v3")//text로 불가능
