@@ -57,6 +57,7 @@ public class RequestBodyStringController {
     public HttpEntity<String> requestBodyStringV3(HttpEntity<String> httpEntity) {
         String messageBody = httpEntity.getBody();
         HttpHeaders headers = httpEntity.getHeaders();
+
         log.info("messageBody={}", messageBody);
         return new HttpEntity<>("ok");
     }
